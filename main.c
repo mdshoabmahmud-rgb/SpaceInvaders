@@ -2,16 +2,13 @@
 #include "raymath.h"
 #define WindowWidth 1500
 #define WindowHeight 900
-
 #define AlienSize 50
 #define AlienDistance 50
 #define AlienSpeedX 20
 #define AlienSpeedY 0
-
 #define HeroWidth 50
 #define HeroHeight 100
 #define HeroSpeedX 500
-
 void DownAlien(int AlienInX, int AlienInY, Vector2 AlienPos[AlienInX][AlienInY]){
     for(int X =0; X < AlienInX; X++){
         for(int Y =0; Y < AlienInY; Y++){
