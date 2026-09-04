@@ -151,6 +151,7 @@ int main(void)
         //game Won
         if (AliensKilled == AlienInX * AlienInY)
         {
+            
             int popupWidth = 500;
             int popupHeight = 240;
             int popupX = (WindowWidth - popupWidth) / 2;
@@ -171,8 +172,7 @@ int main(void)
             if (IsKeyPressed(KEY_R))
             {
                 HeroLives = 3;
-                Score = 0;
-                GameOver = false;
+                AliensKilled = 0;                
                 HeroPos = (Vector2){ WindowWidth / 2.0f, WindowHeight - HeroHeight };
                 HeroSpeed = (Vector2){ 0, 0 };
                 AlienSpeed = (Vector2){ AlienSpeedX, AlienSpeedY };
