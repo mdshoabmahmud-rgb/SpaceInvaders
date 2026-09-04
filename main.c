@@ -171,17 +171,14 @@ int main(void)
 
             if (IsKeyPressed(KEY_R))
             {
-                HeroLives = 3;
                 AliensKilled = 0;                
                 HeroPos = (Vector2){ WindowWidth / 2.0f, WindowHeight - HeroHeight };
                 HeroSpeed = (Vector2){ 0, 0 };
                 AlienSpeed = (Vector2){ AlienSpeedX, AlienSpeedY };
-
                 HeroBulletActive[0] = false;
                 HeroBulletActive[1] = false;
                 AlienBulletActive = false;
                 AlienShootTimer = 0.0f;
-
                 for (int X = 0; X < AlienInX; X++)
                 {
                     for (int Y = 0; Y < AlienInY; Y++)
