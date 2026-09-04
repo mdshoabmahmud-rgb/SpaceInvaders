@@ -17,7 +17,7 @@
 #define HeroSpeedX 250
 
 
-#define BulletSpeedY 700
+#define BulletSpeedY 1500
 #define BulletWidth 6
 #define BulletHeight 20
 
@@ -44,6 +44,7 @@ int main(void)
     bool AlienAlive[AlienInX][AlienInY];
 
     int AlienKilled = 0;
+    int score = 0;
     int BulletUsed = 0;
 
     AlienPos[0][0] = (Vector2){ 150, 50 };
@@ -121,6 +122,7 @@ int main(void)
                             {
                                 AlienAlive[X][Y] = false;
                                 AlienKilled++;
+                                score += 100;
                                 BulletActive = false;
                                 break;
                             }
@@ -199,8 +201,8 @@ int main(void)
         Rectangle Hero = { HeroPos.x - HeroWidth / 2.0f, HeroPos.y, HeroWidth, HeroHeight };
         DrawTexturePro(HeroTexture, (Rectangle){ 0, 0, (float)HeroTexture.width, (float)HeroTexture.height }, Hero, (Vector2){ 0, 0 }, 0.0f, WHITE);
         DrawRectangleRec((Rectangle){HeroPos.x,0,1 ,WindowHeight-HeroHeight }, RED);
-        DrawText(TextFormat("Aliens Killed: %d", AlienKilled), 10, 10, 20, WHITE);
-
+        DrawText(TextFormat("Aliens Killed: %d\n", AlienKilled), 10, 10, 20, WHITE);
+        DrawText(TextFormat("Score: %d\n",  score), 10, 40, 20, RED);
         EndDrawing();
     }
 
