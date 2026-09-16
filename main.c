@@ -1,9 +1,6 @@
 #include "raylib.h"
-
 #include "raymath.h"
 #include <stdbool.h>
-
-
 
 #define WindowWidth 1500
 #define WindowHeight 900
@@ -42,6 +39,8 @@ void DownAlien(int AlienInX, int AlienInY, Vector2 AlienPos[AlienInX][AlienInY])
 int main(void)
 {
     InitWindow(WindowWidth, WindowHeight, "Space Invaders");
+    InitAudioDevice();
+    
     SetTargetFPS(60);
 
     // Alien speed and position
@@ -63,6 +62,8 @@ int main(void)
     }
 
     Texture2D AlienTexture[AlienSprite][AlienSpriteStyle];
+    Sound shoot=LoadSound("assets/audio/alienshoot2.wav");
+    Sound AlienShoot=LoadSound("assets/audio/alienshoot1.wav");
     Texture2D HeroTexture = LoadTexture("assets/sprites/Hero.png");
     AlienTexture[0][0] = LoadTexture("assets/sprites/Alien1style1.png");
     AlienTexture[0][1] = LoadTexture("assets/sprites/Alien1style2.png");
@@ -113,7 +114,7 @@ int main(void)
             char titleText[] = "GAME OVER";
             DrawText(titleText, popupX + (popupWidth - MeasureText(titleText, 45)) / 2, popupY + 35, 45, RED);
 
-            char subText[] = "You lost all 3 lives!";
+            char subText[] = "You lost all 3 lives! You Are A Noob!!";
             DrawText(subText, popupX + (popupWidth - MeasureText(subText, 22)) / 2, popupY + 105, 22, WHITE);
 
             char restartText[] = "Press [R] to Restart";
@@ -163,7 +164,7 @@ int main(void)
             char titleText[] = "GAME WON";
             DrawText(titleText, popupX + (popupWidth - MeasureText(titleText, 45)) / 2, popupY + 35, 45, GREEN);
 
-            char subText[] = "You defeated all aliens!";
+            char subText[] = "You defeated all aliens! ;)";
             DrawText(subText, popupX + (popupWidth - MeasureText(subText, 22)) / 2, popupY + 105, 22, WHITE);
 
             char restartText[] = "Press [R] to Restart";
@@ -175,10 +176,12 @@ int main(void)
                 HeroPos = (Vector2){ WindowWidth / 2.0f, WindowHeight - HeroHeight };
                 HeroSpeed = (Vector2){ 0, 0 };
                 AlienSpeed = (Vector2){ AlienSpeedX, AlienSpeedY };
+
                 HeroBulletActive[0] = false;
                 HeroBulletActive[1] = false;
                 AlienBulletActive = false;
                 AlienShootTimer = 0.0f;
+
                 for (int X = 0; X < AlienInX; X++)
                 {
                     for (int Y = 0; Y < AlienInY; Y++)
@@ -209,6 +212,7 @@ int main(void)
 
         if (IsKeyPressed(KEY_SPACE) && canShoot)
         {
+            PlaySound(shoot);
             for (int i = 0; i < 2; i++)
             {
                 if (!HeroBulletActive[i])
@@ -271,6 +275,7 @@ int main(void)
             {
                 if (AlienAlive[randomX][Y])
                 {
+                    PlaySound(AlienShoot);
                     AlienBulletActive = true;
                     AlienBulletPos = (Vector2){ AlienPos[randomX][Y].x + AlienSize / 2.0f, AlienPos[randomX][Y].y + AlienSize };
                     break;
@@ -401,6 +406,8 @@ int main(void)
 
     // Cleanup
     UnloadTexture(HeroTexture);
+    UnloadSound(shoot);
+    UnloadSound(AlienShoot);
     for (int Asprite = 0; Asprite < AlienSprite; Asprite++)
     {
         for (int AStyle = 0; AStyle < AlienSpriteStyle; AStyle++)
