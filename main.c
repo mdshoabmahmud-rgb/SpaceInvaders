@@ -1607,7 +1607,7 @@ int main(void)
 
                 for (int i = 0; i < 2; i++)
                 {
-                    if (bActive[i])
+                    if (bActive[i]|| Hero1SpecialBulletActive)
                     {
                         bPos[i].y -= BulletSpeedY * Time;
                         if (bPos[i].y < -BulletHeight)
@@ -1651,13 +1651,25 @@ int main(void)
                         }
 
                         // Collision with Medium Minion Aliens deployed by shields
-                        if (bossActive && bActive[i])
+                        if (bossActive && (bActive[i]|| Hero1SpecialBulletActive))
                         {
                             for (int m = 0; m < MAX_MINIONS; m++)
                             {
                                 if (minionActive[m])
                                 {
                                     Rectangle mRec = { minionPos[m].x, minionPos[m].y, MinionSize, MinionSize };
+                        
+                                    if(Hero1SpecialBulletActive) // Shoab's special bullet destroys minions instantly
+                                    {
+                                        Rectangle SpecialBulletRec = { Hero1SpecialBulletPos.x - BulletWidth / 2.0f, Hero1SpecialBulletPos.y, BulletWidth, BulletHeight*5 };
+                                        if (CheckCollisionRecs(SpecialBulletRec, mRec))
+                                        {
+                                            minionActive[m] = false;
+                                            *hKills += 1;
+                                            Hero1Score += 200;
+                                            PlaySound(damage);
+                                        }
+                                    }
                                     if (CheckCollisionRecs(bRec, mRec))
                                     {
                                         PlaySound(damage);
@@ -1676,11 +1688,85 @@ int main(void)
                         }
 
                         // shildeing of boss
-                        if (bossActive && bActive[i])
+                        if (bossActive && (bActive[i]|| Hero1SpecialBulletActive))
                         {
                             Rectangle leftPodRec  = { bossPos.x + 8, bossPos.y + 70, 75, 110 };
                             Rectangle rightPodRec = { bossPos.x + BossWidth - 83, bossPos.y + 70, 75, 110 };
                             Rectangle coreRec     = { bossPos.x + 85, bossPos.y + 35, 130, 130 };
+                            Rectangle SpecialBulletRec = { Hero1SpecialBulletPos.x - BulletWidth / 2.0f, Hero1SpecialBulletPos.y, BulletWidth, BulletHeight*5 };
+                            if (bossLeftPodHp > 0 && CheckCollisionRecs(SpecialBulletRec, leftPodRec))
+                            {
+                                Hero1SpecialBulletActive = false;
+                                PlaySound(damage);
+                                bossLeftPodHp -= 50;
+                                *hScore += 250;
+                                *hBossDmg += 50;
+                                if (bossLeftPodHp <= 0)
+                                {
+                                    bossRightPodHp +=bossLeftPodHp;
+                                    if(bossRightPodHp < 0) {
+                                        bossHp+=bossRightPodHp;
+                                        bossRightPodHp = 0;
+                                    }
+                                    bossLeftPodHp = 0;
+                                    *hScore += 250;
+                                
+                                }
+                            }
+                            else if (bossRightPodHp > 0 && CheckCollisionRecs(SpecialBulletRec, rightPodRec))
+                            {
+                                Hero1SpecialBulletActive = false;
+                                PlaySound(damage);
+                                bossRightPodHp -= 50;
+                                *hScore += 250;
+                                *hBossDmg += 50;
+                                if (bossRightPodHp <= 0)
+                                {
+                                    bossLeftPodHp +=bossRightPodHp;
+                                    if(bossLeftPodHp < 0) {
+                                        bossHp+=bossLeftPodHp;
+                                        bossLeftPodHp = 0;
+                                    }
+                                    bossRightPodHp = 0;
+                                    *hScore += 250;
+                                }
+                            }
+                            else if (CheckCollisionRecs(SpecialBulletRec, coreRec))
+                            {
+                                Hero1SpecialBulletActive = false; // If ANY shield is present, boss's hp WILL NOT decrease for any hit by hero!
+                                if (bossLeftPodHp > 0 || bossRightPodHp > 0)
+                                {
+                                    PlaySound(damage);
+                                    bossLeftPodHp -= 50;
+                                    *hScore += 250;
+                                    *hBossDmg += 50;
+                                    if (bossLeftPodHp <= 0)
+                                    {
+                                        bossRightPodHp +=bossLeftPodHp;
+                                        if(bossRightPodHp < 0) {
+                                            bossHp+=bossRightPodHp;
+                                            bossRightPodHp = 0;
+                                        }
+                                        bossLeftPodHp = 0;
+                                        *hScore += 250;
+                                    }
+                                }
+                                else
+                                {
+                                    // Both shields completely destroyed! Core exposed! Boss HP decreases by 3 per hit
+                                    PlaySound(damage);
+                                    bossHp -= 30;
+                                    *hScore += 500;
+                                    *hBossDmg += 30;
+
+                                    if (bossHp <= 0)
+                                    {
+                                        bossHp = 0;
+                                        bossActive = false;
+                                        bossDefeated = true;
+                                    }
+                                }
+                            }
 
                             // Target Left Shield Pod (Decreases by 5 per hit; bossHp does NOT decrease)
                             if (bossLeftPodHp > 0 && CheckCollisionRecs(bRec, leftPodRec))
@@ -1696,6 +1782,7 @@ int main(void)
                                     *hScore += 250;
                                 }
                             }
+
                             // Target Right Shield Pod (Decreases by 5 per hit; bossHp does NOT decrease)
                             else if (bossRightPodHp > 0 && CheckCollisionRecs(bRec, rightPodRec))
                             {
@@ -2543,7 +2630,12 @@ int main(void)
             if (Hero1SpecialBulletPos.y < 0)
             {
                 Hero1SpecialBulletActive = false;
-            }   
+            }
+            
+            
+
+
+
             // TOP-RIGHT HUD: NAYEMUL'S STATUS, INDIVIDUAL SCORE & CONTROLS
             const char* pilot2Title = "PILOT 2: NAYEMUL";
             int p2tW = MeasureText(pilot2Title, 20);
