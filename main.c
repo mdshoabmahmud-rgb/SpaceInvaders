@@ -4,12 +4,18 @@
 #include <stdio.h>
 #include <math.h>
 
+bool SpecialReady = false;
+
+bool starttimer = false;
+float ShoabSpecialTime = 0.0f;
+
+#define FPS 60
 #define WindowWidth 1500
 #define WindowHeight 900
 
 #define AlienSize 50
 #define AlienDistance 50
-#define AlienSpeedX 20
+#define AlienSpeedX 30
 #define AlienSpeedY 0
 #define AlienSprite 20
 
@@ -56,7 +62,7 @@ void DownAlien(int AlienInX, int AlienInY, Vector2 AlienPos[AlienInX][AlienInY])
     {
         for (int Y = 0; Y < AlienInY; Y++)
         {
-            AlienPos[X][Y].y += AlienSize / 0.5f;
+            AlienPos[X][Y].y += AlienSize / 1.0f;
         }
     }
 }
@@ -108,7 +114,7 @@ int main(void)
 {
     InitWindow(WindowWidth, WindowHeight, "Space Invaders");
     InitAudioDevice();
-    SetTargetFPS(60);
+    SetTargetFPS(FPS);
 
     // Dynamic Starfield Background
     Vector2 StarPos[STAR_COUNT];
@@ -128,6 +134,7 @@ int main(void)
     AlienPos[0][0] = (Vector2){ 150, 50 };
     Vector2 AlienSpeed = { AlienSpeedX, AlienSpeedY };
     int AlienLooks[AlienInX][AlienInY];
+    int SpeedBuff[AlienInY];
     for (int X = 0; X < AlienInX; X++)
     {
         for (int Y = 0; Y < AlienInY; Y++)
@@ -136,6 +143,7 @@ int main(void)
             AlienPos[X][Y].y = AlienPos[0][0].y + (AlienSize + AlienDistance) * Y;
             AlienAlive[X][Y] = true;
             AlienLooks[X][Y] = GetRandomValue(1, AlienSprite);
+            SpeedBuff[Y] = GetRandomValue(0, 20);
         }
     }
 
@@ -197,7 +205,9 @@ int main(void)
     Vector2 Hero1Pos = { WindowWidth * 0.35f, WindowHeight - HeroHeight };
     Vector2 Hero1Speed = { 0, 0 };
     Vector2 Hero1BulletPos[2] = { {0, 0}, {0, 0} };
+    Vector2 Hero1SpecialBulletPos = { 0, 0 };
     bool Hero1BulletActive[2] = { false, false };
+    bool Hero1SpecialBulletActive = false;
     bool hero1Debuffed = false;
     float hero1DebuffTimer = 0.0f;
     Vector2 Hero1CrashPos = { 0, 0 };
@@ -906,6 +916,7 @@ int main(void)
 
                 if (bossActive)
                 {
+                    starttimer=true;
                     Rectangle bossRec = { bossPos.x, bossPos.y, BossWidth, BossHeight };
                     DrawTexturePro(BossTexture[0], (Rectangle){ 0, 0, (float)BossTexture[0].width, (float)BossTexture[0].height }, bossRec, (Vector2){ 0, 0 }, 0.0f, WHITE);
 
@@ -930,7 +941,6 @@ int main(void)
                         }
                     }
                 }
-
                 for (int i = 0; i < 2; i++)
                 {
                     if (Hero1BulletActive[i]) DrawRectangle((int)(Hero1BulletPos[i].x - BulletWidth / 2.0f), (int)Hero1BulletPos[i].y, BulletWidth, BulletHeight, YELLOW);
@@ -1419,6 +1429,7 @@ int main(void)
                     AlienSpeed = (Vector2){ AlienSpeedX, AlienSpeedY };
 
                     Hero1BulletActive[0] = false; Hero1BulletActive[1] = false;
+                    Hero1SpecialBulletActive = false;
                     Hero2BulletActive[0] = false; Hero2BulletActive[1] = false;
                     AlienBulletActive = false;
                     AlienShootTimer = 0.0f;
@@ -2186,25 +2197,28 @@ int main(void)
             // ALIEN GRID MOVEMENT
             if (!bossSpawned)
             {
-                if (AlienPos[AlienInX - 1][0].x + AlienSize >= WindowWidth && AlienSpeed.x > 0)
-                {
-                    AlienSpeed.x *= -1;
-                    DownAlien(AlienInX, AlienInY, AlienPos);
+                for(int Y=0; Y<AlienInY; Y++){
+                    if (AlienPos[AlienInX - 1][Y].x + AlienSize >= WindowWidth && AlienSpeed.x > 0)
+                    {
+                        AlienSpeed.x *= -1;
+                        DownAlien(AlienInX, AlienInY, AlienPos);
+                    }
+                    else if (AlienPos[0][Y].x <= 0 && AlienSpeed.x < 0)
+                    {
+                        AlienSpeed.x *= -1;
+                        DownAlien(AlienInX, AlienInY, AlienPos);
+                    }
                 }
-                else if (AlienPos[0][0].x <= 0 && AlienSpeed.x < 0)
-                {
-                    AlienSpeed.x *= -1;
-                    DownAlien(AlienInX, AlienInY, AlienPos);
-                }
-
                 for (int X = 0; X < AlienInX; X++)
                 {
                     for (int Y = 0; Y < AlienInY; Y++)
                     {
-                        AlienPos[X][Y] = Vector2Add(AlienPos[X][Y], Vector2Scale(AlienSpeed, Time));
-
+                        if (AlienSpeed.x > 0) AlienPos[X][Y] = Vector2Add(AlienPos[X][Y], Vector2Scale(Vector2Add(AlienSpeed, (Vector2){ SpeedBuff[Y], 0 }), Time));
+                        else
+                        AlienPos[X][Y] = Vector2Add(AlienPos[X][Y], Vector2Scale(Vector2Add(AlienSpeed, (Vector2){ SpeedBuff[Y]*(-1), 0 }), Time));
                         if (AlienAlive[X][Y])
                         {
+                            starttimer=true;
                             Rectangle Alien = { AlienPos[X][Y].x, AlienPos[X][Y].y, AlienSize, AlienSize };
                             int AStyle = (int)(GetTime() / 0.1) % AlienSpriteStyle[AlienLooks[X][Y]-1];
                             DrawTexturePro(AlienTexture[AlienLooks[X][Y]-1],
@@ -2244,6 +2258,7 @@ int main(void)
             // DRAW BOSS, SHIELDS and MEDIUM-SIZED MINION ALIENS
             if (bossActive)
             {
+                starttimer=true;
                 int bFrame = 0;
                 if (bossSpeed.y > 25.0f) bFrame = 1;
                 else if (bossSpeed.y < -25.0f) bFrame = 2;
@@ -2477,7 +2492,58 @@ int main(void)
             DrawText(TextFormat("LIVES: %d / 4", Hero1Lives), 30, 44, 22, (Hero1Lives <= 1) ? RED : LIME);
             DrawText(TextFormat("SCORE: %05d", Hero1Score), 30, 72, 22, (Color){ 180, 255, 180, 255 });
             DrawText("[A / D] Move  |  [W / SPACE] Shoot", 30, 100, 15, LIGHTGRAY);
+            
+            // SPECIAL ABILITY TIMER For Shoab and SPecial Bullet
+            //bPos[i].y -= BulletSpeedY * Time;
+            if (!(isPaused)&& Hero1Lives > 0 )
+            {
+                ShoabSpecialTime += 1;
+            }
+            if (ShoabSpecialTime >= FPS * 15.0f)
+            {
+                DrawText("[Q] SPECIAL READY", 30, 122, 14, LIME);
+                SpecialReady = true;
+            }
+            else
+            {
+                DrawText(TextFormat("[Q] SPECIAL READY IN %.1f s", 15.0f - ShoabSpecialTime / FPS), 30, 122, 14, RED);
+                SpecialReady = false;
+            }
+            if (SpecialReady && IsKeyPressed(KEY_Q) && Hero1Lives > 0 && !deathSequenceActive && !bossWarningActive)
+            {
+                Hero1SpecialBulletPos = (Vector2){ Hero1Pos.x, Hero1Pos.y };
+                Hero1SpecialBulletActive = true;
+                ShoabSpecialTime = 0;
+                SpecialReady = false;
 
+            }
+            if (Hero1SpecialBulletActive)
+            {
+                DrawRectangle((int)(Hero1SpecialBulletPos.x - BulletWidth / 2.0f), (int)Hero1SpecialBulletPos.y, BulletWidth, BulletHeight*5, WHITE);
+            }
+            Hero1SpecialBulletPos.y -= BulletSpeedY * Time;
+            for (int i=0; i<AlienInX; i++)
+            {
+                for (int j=0; j<AlienInY; j++)
+                {
+                    if (Hero1SpecialBulletActive && AlienAlive[i][j])
+                    {
+                        Rectangle SpecialBulletRec = { Hero1SpecialBulletPos.x - BulletWidth / 2.0f, Hero1SpecialBulletPos.y, BulletWidth, BulletHeight*5 };
+                        Rectangle AlienRec = { AlienPos[i][j].x, AlienPos[i][j].y, AlienSize, AlienSize };
+                        if (CheckCollisionRecs(SpecialBulletRec, AlienRec))
+                        {
+                            AlienAlive[i][j] = false;
+                            AliensKilled++;
+                            Hero1Score += 100;
+                            PlaySound(damage);
+                        }
+                    }
+                }
+            }
+            if (Hero1SpecialBulletPos.y < 0)
+            {
+                Hero1SpecialBulletActive = false;
+            }   
             // TOP-RIGHT HUD: NAYEMUL'S STATUS, INDIVIDUAL SCORE & CONTROLS
             const char* pilot2Title = "PILOT 2: NAYEMUL";
             int p2tW = MeasureText(pilot2Title, 20);
